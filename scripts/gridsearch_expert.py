@@ -7,9 +7,12 @@ import torch
 import yaml
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from datasets import load_dataset
-
 import wandb
+
+try:
+    from datasets import load_dataset  # Import for the Pile dataset
+except ImportError:
+    raise ImportError("The 'datasets' module is not installed. Install it using 'pip install datasets'.")
 
 alpha = 0.032
 
