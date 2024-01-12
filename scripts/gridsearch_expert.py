@@ -10,9 +10,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import wandb
 
 try:
-    from datasets import load_dataset  # Import for the Pile dataset
-except ImportError:
-    raise ImportError("The 'datasets' module is not installed. Install it using 'pip install datasets'.")
+    pile_dataset = load_dataset("the_pile", split="train")
+    print("Successfully loaded the Pile dataset.")
+except Exception as e:
+    print(f"Error loading the Pile dataset: {e}")
 
 alpha = 0.032
 
