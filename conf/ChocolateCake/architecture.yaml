@@ -1,0 +1,87 @@
+model_name: "ChocolateCake"
+enc_dim: 2048
+gpu: 0
+
+components:
+  ScienceNerd:
+    gpu: 0
+    base_model: "EleutherAI/gpt-neo-2.7B"
+    precision: "half"
+    mountain_subsets:
+      - "ArXiv"
+      - "DMMathematics"
+    batch_size: 2
+    learning_rate: 0.000006
+    num_batches: 64000
+    optimizer: "adam"
+
+  Books3:
+    gpu: 1
+    base_model: "EleutherAI/gpt-neo-2.7B"
+    precision: "half"
+    mountain_subsets:
+      - "Books3"
+    batch_size: 2
+    learning_rate: 0.000005
+    num_batches: 32000
+    optimizer: "adam"
+
+  Books:
+    gpu: 1
+    base_model: "EleutherAI/gpt-neo-2.7B"
+    precision: "half"
+    mountain_subsets:
+      - "BookCorpus2"
+    batch_size: 2
+    learning_rate: 0.000005
+    num_batches: 64000
+    optimizer: "adam"
+
+  Multilingual:
+    gpu: 2
+    base_model: "EleutherAI/gpt-neo-2.7B"
+    precision: "half"
+    mountain_subsets:
+      - "EuroParl"
+      - "YoutubeSubtitles"
+      - "OpenSubtitles"
+    batch_size: 2
+    learning_rate: 0.000004
+    num_batches: 64000
+    optimizer: "adam"
+
+  Tech:
+    gpu: 2
+    base_model: "EleutherAI/gpt-neo-2.7B"
+    precision: "half"
+    mountain_subsets:
+      - "UbuntuIRC"
+      - "HackerNews"
+    batch_size: 2
+    learning_rate: 0.0000015
+    num_batches: 64000
+    optimizer: "adam"
+
+  Dumpling:
+    gpu: 3
+    base_model: "EleutherAI/gpt-neo-2.7B"
+    precision: "half"
+    mountain_subsets:
+      - "EnronEmails"
+      - "Gutenberg_PG"
+    batch_size: 2
+    learning_rate: 0.000004
+    num_batches: 32000
+    optimizer: "adam"
+
+  Olive:
+    gpu: 3
+    base_model: "EleutherAI/gpt-neo-2.7B"
+    precision: "half"
+    mountain_subsets:
+      - "OpenSubtitles"
+      - "NIHExPorter"
+    batch_size: 2
+    learning_rate: 0.000001
+    num_batches: 64000
+    optimizer: "adam"

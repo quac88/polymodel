@@ -1,0 +1,15 @@
+program: scripts/tune_expert_with_gridsearch.py
+method: bayes
+metric:
+  name: loss_ema
+  goal: minimize
+parameters:
+  batch_size:
+    values: [1, 2]
+  num_batches:
+    values: [8000, 16000, 32000, 64000]
+  optimizer:
+    values: ["adam", "sgd"]
+  learning_rate:
+    min: 0.0000001
+    max: 0.00001

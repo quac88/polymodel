@@ -1,0 +1,16 @@
+method: bayes
+metric:
+  name: loss/mixture_ema
+  goal: minimize
+parameters:
+  batches_per_dataset: # 16 iters, so effectively (3200, 6400, 12800, 32000, 64000) steps
+    values: [200, 400, 800, 2000, 4000]
+  batch_size:
+    values: [4, 8, 16, 32]
+  learning_rate:
+      min: 0.000000001
+      max: 0.001
+  enc_dim:
+    values: [1024, 2048, 3072]
+  use_transformer:
+    values: [True, False]
