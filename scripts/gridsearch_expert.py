@@ -9,6 +9,8 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import wandb
 
+from datasets import load_dataset
+
 try:
     pile_dataset = load_dataset("the_pile", split="train")
     print("Successfully loaded the Pile dataset.")
