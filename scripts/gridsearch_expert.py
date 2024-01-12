@@ -25,7 +25,7 @@ def parse_args():
 
     return parser.parse_args()
 
-def main():
+def main(args):
     args = parse_args()
     run = wandb.init()
 
