@@ -1,0 +1,9 @@
+requests
+flask
+transformers
+datasets
+sentence-transformers
+bittensor
+wandb
+tqdm
+pyyaml
