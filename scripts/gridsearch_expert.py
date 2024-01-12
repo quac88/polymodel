@@ -93,9 +93,10 @@ def main():
     run.finish()
 
 if __name__ == "__main__":
+    args = parse_args()
     wandb.agent(
         sweep_id=args.sweep_id,
-        function=main,
+        function=lambda: main(args),
         entity="skynetcc",
         project=f"{args.model_name}_experts",
     )
