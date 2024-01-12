@@ -16,7 +16,7 @@ components:
     optimizer: "adam"
 
   Books3:
-    gpu: 1
+    gpu: 0
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
@@ -51,7 +51,7 @@ components:
     optimizer: "adam"
 
   Tech:
-    gpu: 0
+    gpu: 1
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
@@ -75,7 +75,7 @@ components:
     optimizer: "adam"
 
   Olive:
-    gpu: 0
+    gpu: 1
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
