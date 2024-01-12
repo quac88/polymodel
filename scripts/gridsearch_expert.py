@@ -7,11 +7,11 @@ import torch
 import yaml
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from datasets import load_dataset
 
 import wandb
 
 alpha = 0.032
-
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -22,9 +22,8 @@ def parse_args():
 
     return parser.parse_args()
 
-
 def main():
-
+    args = parse_args()
     run = wandb.init()
 
     with open(f"conf/{args.model_name}/architecture.yaml") as fh:
@@ -33,17 +32,12 @@ def main():
 
     learning_rate = wandb.config.learning_rate
     num_batches = wandb.config.num_batches
-    assigned_datasets = model_config["mountain_subsets"]
-    if "all" in [item.lower() for item in assigned_datasets]:
-        assigned_datasets = bittensor.__datasets__
-    datasets = {
-        dataset_name: bittensor.dataset(
-            dataset_name=[dataset_name],
-            block_size=256,
-            batch_size=wandb.config.batch_size,
-        )
-        for dataset_name in assigned_datasets
-    }
+
+    # Load the Pile dataset
+    pile_dataset = load_dataset("the_pile", split="train")
+    pile_dataset = pile_dataset.shuffle(seed=42)
+
+    # Bittensor tokenizer
     bttokenizer = bittensor.tokenizer()
 
     model = AutoModelForCausalLM.from_pretrained(model_config["base_model"])
@@ -62,11 +56,12 @@ def main():
     i = 0
     with tqdm(total=num_batches) as pbar:
         while i < num_batches:
-
-            chosen_dataset = random.choice(assigned_datasets)
-            inputs = next(datasets[chosen_dataset])
-            texts = bttokenizer.batch_decode(inputs)
-            inputs = base_tokenizer(texts, return_tensors="pt", padding=True)["input_ids"]
+            # Sample a batch from the Pile dataset
+            batch = pile_dataset.select(range(i * wandb.config.batch_size, (i + 1) * wandb.config.batch_size))
+            texts = [example['text'] for example in batch]
+            # Use Bittensor tokenizer
+            inputs = bttokenizer.batch_decode(texts)
+            inputs = base_tokenizer(inputs, return_tensors="pt", padding=True)["input_ids"]
 
             inputs = inputs.to("cuda")
             model_inputs = dict()
@@ -92,16 +87,9 @@ def main():
             del inputs
             gc.collect()
 
-    for k, v in datasets.items():
-        print(f"Closing {k}")
-        v.close()
-
     run.finish()
 
-
 if __name__ == "__main__":
-    args = parse_args()
-
     wandb.agent(
         sweep_id=args.sweep_id,
         function=main,
