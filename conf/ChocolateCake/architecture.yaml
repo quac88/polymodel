@@ -16,7 +16,7 @@ components:
     optimizer: "adam"
 
   Books3:
-    gpu: 0
+    gpu: 1
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
@@ -27,7 +27,7 @@ components:
     optimizer: "adam"
 
   Books:
-    gpu: 0
+    gpu: 2
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
@@ -38,7 +38,7 @@ components:
     optimizer: "adam"
 
   Multilingual:
-    gpu: 1
+    gpu: 3
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
@@ -51,7 +51,7 @@ components:
     optimizer: "adam"
 
   Tech:
-    gpu: 1
+    gpu: 4
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
@@ -63,7 +63,7 @@ components:
     optimizer: "adam"
 
   Dumpling:
-    gpu: 1
+    gpu: 5
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
@@ -75,11 +75,21 @@ components:
     optimizer: "adam"
 
   Olive:
-    gpu: 1
+    gpu: 6
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     mountain_subsets:
       - "OpenSubtitles"
+    batch_size: 2
+    learning_rate: 0.000001
+    num_batches: 64000
+    optimizer: "adam"
+
+  cat:
+    gpu: 7
+    base_model: "EleutherAI/gpt-neo-2.7B"
+    precision: "half"
+    mountain_subsets:
       - "NIHExPorter"
     batch_size: 2
     learning_rate: 0.000001
