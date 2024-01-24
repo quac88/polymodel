@@ -4,13 +4,12 @@ from typing import Dict, NamedTuple, Sequence
 
 import numpy as np
 import torch
-from bittensor import tokenizer as bttokenizer
 from torch import Tensor as T
 from torch import nn
+from transformers import GPT2Tokenizer
 
 from makoto.embeddings import ExpertEmbeddings, SentenceEmbedder
 from makoto.utils import causal_lm_loss
-
 
 from transformers.models.gpt_neo.configuration_gpt_neo import GPTNeoConfig
 from transformers.models.gpt_neo.modeling_gpt_neo import GPTNeoBlock
@@ -61,7 +60,7 @@ class MakotoServer(nn.Module):
         self.name = cfg["model_name"]
         self.enc_dim = cfg["enc_dim"]
         self.device = f"cuda:{cfg['gpu']}"
-        self.tokenizer = bttokenizer()
+        self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
         # Constituent models & their projection layers.
         self.models = nn.ModuleDict()
