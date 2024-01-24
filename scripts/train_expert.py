@@ -1,27 +1,22 @@
 import argparse
 import os
-
-import bittensor
 import torch
 import yaml
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
-
+from datasets import load_dataset
 import wandb
 
 alpha = 0.032
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
-
     parser.add_argument("--model_name", type=str, required=True)
     parser.add_argument("--expert_name", type=str, required=True)
-
     return parser.parse_args()
 
-
 def main():
+    args = parse_args()
     if not os.path.exists("models"):
         os.makedirs("models")
     modelpath = os.path.join("models", args.model_name)
@@ -36,12 +31,10 @@ def main():
 
     learning_rate = model_config["learning_rate"]
     num_batches = model_config["num_batches"]
+    batch_size = model_config["batch_size"]
 
-    dataset = bittensor.dataset(
-        dataset_name=model_config["mountain_subsets"],
-        block_size=256,
-        batch_size=model_config["batch_size"],
-    )
+    # Load the RedPajama dataset
+    red_pajama_dataset = load_dataset("togethercomputer/RedPajama-Data-1T")
 
     model = AutoModelForCausalLM.from_pretrained(model_config["base_model"])
     model = model.to("cuda")
@@ -56,11 +49,21 @@ def main():
     i = 0
     with tqdm(total=num_batches) as pbar:
         while i < num_batches:
-            inputs = next(dataset)
-            inputs = inputs.to("cuda")
-            model_inputs = dict()
-            model_inputs["input_ids"] = inputs
-            model_inputs["labels"] = inputs
+            # Select random dataset and example
+            chosen_split = random.choice(list(red_pajama_dataset.keys()))
+            dataset_split = red_pajama_dataset[chosen_split]
+            example = random.choice(dataset_split)
+            text = example['text']
+
+            # Process the data as needed for your model
+            # Note: You might need to tokenize or preprocess 'text' before passing it to the model
+
+            inputs = ...  # Add logic to preprocess 'text' for your model
+
+            model_inputs = {
+                "input_ids": inputs,
+                "labels": inputs,
+            }
 
             model.train()
             out = model(**model_inputs)
@@ -85,9 +88,6 @@ def main():
             if i % 1000 == 0:
                 torch.save(model, expert_path)
     torch.save(model, expert_path)
-
-    dataset.close()
-
 
 if __name__ == "__main__":
     args = parse_args()
