@@ -1,107 +1,89 @@
 import gc
 import argparse
 import random
-
-import bittensor
 import torch
 import yaml
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, GPT2Tokenizer
+from datasets import load_dataset
 import wandb
 
-from datasets import load_dataset
+alpha = 0.032
 
-# Argument Parsing
 def parse_args():
     parser = argparse.ArgumentParser()
+
     parser.add_argument("--sweep_id", type=str, required=True)
     parser.add_argument("--model_name", type=str, required=True)
     parser.add_argument("--expert_name", type=str, required=True)
+
     return parser.parse_args()
 
-# Main Function
-def main(args):
+def main():
+    args = parse_args()  # Moved the args parsing inside the main function
     run = wandb.init()
+
     with open(f"conf/{args.model_name}/architecture.yaml") as fh:
-        makoto_config = yaml.load(fh, Loader=yaml.SafeLoader)
+        makoto_config = yaml.load(fh, Loader=yaml.FullLoader)
     model_config = makoto_config["components"][args.expert_name]
 
-    # wandb Configuration Checks
-    learning_rate = wandb.config.learning_rate
-    num_batches = wandb.config.num_batches
-    batch_size = wandb.config.batch_size
+    # Initialize the GPT-2 tokenizer
+    gpt2_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
-    # Load and Shuffle Dataset
-    try:
-        pile_dataset = load_dataset("the_pile", split="train")
-        pile_dataset = pile_dataset.shuffle(seed=42)
-    except Exception as e:
-        print(f"Error loading the Pile dataset: {e}")
-        return
+    # Load the Hugging Face dataset
+    red_pajama_dataset = load_dataset("togethercomputer/RedPajama-Data-1T")
 
-    # Model and Tokenizer Initialization
     model = AutoModelForCausalLM.from_pretrained(model_config["base_model"])
-    base_tokenizer = AutoTokenizer.from_pretrained(model_config["base_model"])
-    if base_tokenizer.pad_token is None:
-        base_tokenizer.pad_token = base_tokenizer.eos_token
-    if torch.cuda.is_available():
-        model = model.to("cuda")
+    model = model.to("cuda")
 
-    # Optimizer Setup
     if wandb.config.optimizer == "adam":
-        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config.learning_rate)
     elif wandb.config.optimizer == "sgd":
-        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+        optimizer = torch.optim.SGD(model.parameters(), lr=wandb.config.learning_rate)
     else:
         raise ValueError("optimizer not implemented")
 
-    # Training Loop
+    num_batches = wandb.config.num_batches
     i = 0
-    loss_ema = None
     with tqdm(total=num_batches) as pbar:
         while i < num_batches:
-            # Batch Selection
-            start_idx = i * batch_size
-            end_idx = (i + 1) * batch_size
-            if end_idx > len(pile_dataset):
-                break
-            batch = pile_dataset.select(range(start_idx, end_idx))
+            # Randomly choose a data split
+            chosen_split = random.choice(list(red_pajama_dataset.keys()))
+            dataset_split = red_pajama_dataset[chosen_split]
 
-            # Tokenization and Model Input Preparation
-            texts = [example['text'] for example in batch]
-            inputs = base_tokenizer(texts, return_tensors="pt", padding=True)["input_ids"]
-            if torch.cuda.is_available():
-                inputs = inputs.to("cuda")
-            model_inputs = {"input_ids": inputs, "labels": inputs}
+            # Randomly select an example from the dataset
+            example = random.choice(dataset_split)
+            text = example["text"]  # Assuming 'text' is the field containing the data
 
-            # Model Forward and Backward Passes
+            # Tokenize the text using GPT-2 tokenizer
+            inputs = gpt2_tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+
+            inputs = inputs.to("cuda")
+            model_inputs = {
+                "input_ids": inputs["input_ids"],
+                "labels": inputs["input_ids"]
+            }
+
             model.train()
             out = model(**model_inputs)
             out.loss.backward()
             optimizer.step()
             optimizer.zero_grad()
 
-            # Loss Tracking
             loss = out.loss.detach().item()
-            loss_ema = (1 - alpha) * loss_ema + alpha * loss if loss_ema is not None else loss
+            if i > 0:
+                loss_ema = (1 - alpha) * loss_ema + alpha * loss
+            else:
+                loss_ema = loss
             wandb.log({"loss": loss, "loss_ema": loss_ema})
 
-            # Progress Update
             i += 1
             pbar.update(1)
 
-            # Memory Management
             del inputs
             gc.collect()
 
     run.finish()
 
-# Entry Point
 if __name__ == "__main__":
-    args = parse_args()
-    wandb.agent(
-        sweep_id=args.sweep_id,
-        function=lambda: main(args),
-        entity="skynetcc",
-        project=f"{args.model_name}_experts",
-    )
+    main()  # Ensure main is called when script is executed
