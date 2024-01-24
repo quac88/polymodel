@@ -7,9 +7,10 @@ components:
     gpu: 0
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
-    mountain_subsets:
-      - "ArXiv"
-      - "DMMathematics"
+    redpajama_subsets:
+      - "common_crawl"
+      - "c4"
+      - "github"
     batch_size: 2
     learning_rate: 0.000006
     num_batches: 64000
@@ -19,79 +20,22 @@ components:
     gpu: 1
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
-    mountain_subsets:
-      - "Books3"
+    redpajama_subsets:
+      - "books"
+      - "arxiv"
     batch_size: 2
     learning_rate: 0.000005
     num_batches: 32000
     optimizer: "adam"
 
   Books:
-    gpu: 2
+    gpu: 0
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
-    mountain_subsets:
-      - "BookCorpus2"
+    redpajama_subsets:
+      - "wikipedia"
+      - "stackexchange"
     batch_size: 2
     learning_rate: 0.000005
-    num_batches: 64000
-    optimizer: "adam"
-
-  Multilingual:
-    gpu: 3
-    base_model: "EleutherAI/gpt-neo-2.7B"
-    precision: "half"
-    mountain_subsets:
-      - "EuroParl"
-      - "YoutubeSubtitles"
-      - "OpenSubtitles"
-    batch_size: 2
-    learning_rate: 0.000004
-    num_batches: 64000
-    optimizer: "adam"
-
-  Tech:
-    gpu: 4
-    base_model: "EleutherAI/gpt-neo-2.7B"
-    precision: "half"
-    mountain_subsets:
-      - "UbuntuIRC"
-      - "HackerNews"
-    batch_size: 2
-    learning_rate: 0.0000015
-    num_batches: 64000
-    optimizer: "adam"
-
-  Dumpling:
-    gpu: 5
-    base_model: "EleutherAI/gpt-neo-2.7B"
-    precision: "half"
-    mountain_subsets:
-      - "EnronEmails"
-      - "Gutenberg_PG"
-    batch_size: 2
-    learning_rate: 0.000004
-    num_batches: 32000
-    optimizer: "adam"
-
-  Olive:
-    gpu: 6
-    base_model: "EleutherAI/gpt-neo-2.7B"
-    precision: "half"
-    mountain_subsets:
-      - "OpenSubtitles"
-    batch_size: 2
-    learning_rate: 0.000001
-    num_batches: 64000
-    optimizer: "adam"
-
-  cat:
-    gpu: 7
-    base_model: "EleutherAI/gpt-neo-2.7B"
-    precision: "half"
-    mountain_subsets:
-      - "NIHExPorter"
-    batch_size: 2
-    learning_rate: 0.000001
     num_batches: 64000
     optimizer: "adam"
