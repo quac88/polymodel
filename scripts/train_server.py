@@ -1,6 +1,5 @@
 import argparse
 import os
-
 import torch
 import yaml
 from datasets import load_dataset
@@ -11,7 +10,6 @@ import wandb
 from makoto.server import MakotoResponse, MakotoServer
 from makoto.utils import TokenizerWrapper
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, default=16)
@@ -21,9 +19,7 @@ def parse_args():
 
     return parser.parse_args()
 
-
 if __name__ == "__main__":
-
     args = parse_args()
     if not os.path.exists("models/"): os.makedirs("models")
 
@@ -45,21 +41,20 @@ if __name__ == "__main__":
     print(f"Model has: {model.n_expert_parameters:,} expert parameters")
     print(f"Model has: {model.n_total_parameters:,} total parameters")
 
-    seed, buffer_size = 0, 10_000
-    dataset = load_dataset("EleutherAI/the_pile_deduplicated", "all", split="train", streaming=True)
-    dataset = dataset.shuffle(seed, buffer_size=buffer_size)
-    dataset = dataset.with_format("torch")
-
+    # Load the RedPajama dataset
+    dataset = load_dataset("togethercomputer/RedPajama-Data-1T")
+    # Make necessary adjustments if the format of RedPajama is different from the previous dataset
     tokenizer = TokenizerWrapper(args.sequence_length)
-
     dataset = dataset.map(tokenizer, batched=True, remove_columns=["text"])
-    dataloader = DataLoader(dataset, batch_size=args.batch_size)
+    dataloader = DataLoader(dataset['train'], batch_size=args.batch_size)  # Assuming 'train' split is used
+
     for i, batch in tqdm(enumerate(dataloader), total=args.num_batches):
         if i == args.num_batches:
             break
-        model_inputs = dict()
-        model_inputs["input_ids"] = batch["tokens"].to(model.device)
-        model_inputs["labels"] = batch["tokens"].to(model.device)
+        model_inputs = {
+            "input_ids": batch["tokens"].to(model.device),
+            "labels": batch["tokens"].to(model.device)
+        }
         output: MakotoResponse = model(model_inputs, train=True)
 
         wandb_dict = {"loss/mixture": output.loss}
