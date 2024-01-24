@@ -21,20 +21,35 @@ def parse_args():
 
 def main():
     args = parse_args()  # Moved the args parsing inside the main function
-    run = wandb.init()
+    run = wandb.init(project="ChocolateCake", entity="skynetcc")
 
-    with open(f"conf/{args.model_name}/architecture.yaml") as fh:
+    # Load configuration from the YAML file
+    with open(f"/root/mac/polymodel/conf/{args.model_name}/architecture.yaml") as fh:
         makoto_config = yaml.load(fh, Loader=yaml.FullLoader)
+    # Select the component configuration
     model_config = makoto_config["components"][args.expert_name]
+
+    # Update the wandb configuration with the values from the YAML file
+    wandb.config.update({
+        "learning_rate": model_config["learning_rate"],
+        "num_batches": model_config["num_batches"],
+        "optimizer": model_config["optimizer"],
+        "batch_size": model_config["batch_size"],
+    })
+
+    # assign the datasets
+    assign
 
     # Initialize the GPT-2 tokenizer
     gpt2_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
     # Load the Hugging Face dataset
-    red_pajama_dataset = load_dataset("togethercomputer/RedPajama-Data-1T", 'default')
+    red_pajama_dataset = load_dataset("togethercomputer/RedPajama-Data-1T", 'default', streaming=True)
 
     model = AutoModelForCausalLM.from_pretrained(model_config["base_model"])
     model = model.to("cuda")
+
+    print("WandB configuration:", dict(wandb.config))
 
     if wandb.config.optimizer == "adam":
         optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config.learning_rate)
