@@ -105,5 +105,5 @@ if __name__ == "__main__":
         sweep_id=args.sweep_id,
         function=main,
         entity="skynetcc",
-        project=f"{args.model_name}_experts",
+        project=f"{args.model_name}",
     )
