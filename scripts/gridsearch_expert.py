@@ -31,7 +31,7 @@ def main():
     gpt2_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
     # Load the Hugging Face dataset
-    red_pajama_dataset = load_dataset("togethercomputer/RedPajama-Data-1T")
+    red_pajama_dataset = load_dataset("togethercomputer/RedPajama-Data-1T", 'default')
 
     model = AutoModelForCausalLM.from_pretrained(model_config["base_model"])
     model = model.to("cuda")
