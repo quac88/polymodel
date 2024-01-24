@@ -4,7 +4,7 @@ import random
 import torch
 import yaml
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, GPT2Tokenizer
+from transformers import AutoModelForCausalLM, GPT2Tokenizer, AutoTokenizer
 from datasets import load_dataset
 import wandb
 
@@ -36,21 +36,28 @@ def main():
         "optimizer": model_config["optimizer"],
         "batch_size": model_config["batch_size"],
     })
+    learning_rate = model_config["learning_rate"]
+    num_batches = model_config["num_batches"]
 
     # assign the datasets
-    assign
-
-    # Initialize the GPT-2 tokenizer
-    gpt2_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-
+    assigned_datasets = model_config["redpajama_subsets"]
     # Load the Hugging Face dataset
     red_pajama_dataset = load_dataset("togethercomputer/RedPajama-Data-1T", 'default', streaming=True)
-
+    # Initialize the GPT-2 tokenizer
+    gpt2_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    # Load the model
     model = AutoModelForCausalLM.from_pretrained(model_config["base_model"])
+    # Load the tokenizer
+    base_tokenizer = AutoTokenizer.from_pretrained(model_config["base_model"])
+    # Set the padding token to the eos token if it is None
+    if base_tokenizer.pad_token is None:
+        base_tokenizer.pad_token = base_tokenizer.eos_token
+    # Set the model to the GPU
     model = model.to("cuda")
 
     print("WandB configuration:", dict(wandb.config))
 
+    # Initialize the optimizer
     if wandb.config.optimizer == "adam":
         optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config.learning_rate)
     elif wandb.config.optimizer == "sgd":
@@ -58,26 +65,17 @@ def main():
     else:
         raise ValueError("optimizer not implemented")
 
-    num_batches = wandb.config.num_batches
     i = 0
     with tqdm(total=num_batches) as pbar:
         while i < num_batches:
-            # Randomly choose a data split
-            chosen_split = random.choice(list(red_pajama_dataset.keys()))
-            dataset_split = red_pajama_dataset[chosen_split]
-
-            # Randomly select an example from the dataset
-            example = random.choice(dataset_split)
-            text = example["text"]  # Assuming 'text' is the field containing the data
-
-            # Tokenize the text using GPT-2 tokenizer
-            inputs = gpt2_tokenizer(text, return_tensors="pt", padding=True, truncation=True)
-
+            chosen_dataset = random.choice(assigned_datasets)
+            inputs = next(red_pajama_dataset[chosen_dataset])
+            texts = gpt2_tokenizer.batch_decode(inputs)
+            inputs = gpt2_tokenizer(texts, return_tensors="pt", padding=True, truncation=True)
             inputs = inputs.to("cuda")
-            model_inputs = {
-                "input_ids": inputs["input_ids"],
-                "labels": inputs["input_ids"]
-            }
+            model_inputs = dict()
+            model_inputs["input_ids"] = inputs
+            model_inputs["labels"] = inputs
 
             model.train()
             out = model(**model_inputs)
@@ -101,4 +99,11 @@ def main():
     run.finish()
 
 if __name__ == "__main__":
-    main()  # Ensure main is called when script is executed
+    args = parse_args()
+
+    wandb.agent(
+        sweep_id=args.sweep_id,
+        function=main,
+        entity="skynetcc",
+        project=f"{args.model_name}_experts",
+    )
