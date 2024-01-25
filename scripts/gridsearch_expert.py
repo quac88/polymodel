@@ -29,20 +29,16 @@ def main():
     # Select the component configuration
     model_config = makoto_config["components"][args.expert_name]
 
-    # Update the wandb configuration with the values from the YAML file
-    wandb.config.update({
-        "learning_rate": model_config["learning_rate"],
-        "num_batches": model_config["num_batches"],
-        "optimizer": model_config["optimizer"],
-        "batch_size": model_config["batch_size"],
-    })
-    learning_rate = model_config["learning_rate"]
-    num_batches = model_config["num_batches"]
+    learning_rate = wandb.config.learning_rate
+    num_batches = wandb.config.num_batches
 
-    # assign the datasets
+    # Load datasets
     assigned_datasets = model_config["redpajama_subsets"]
-    # Load the Hugging Face dataset
-    red_pajama_dataset = load_dataset("togethercomputer/RedPajama-Data-1T", 'default', streaming=True)
+    datasets = {}
+    for subset in assigned_datasets:
+        datasets[subset] = load_dataset(
+            "togethercomputer/RedPajama-Data-1T", subset, streaming=True, trust_remote_code=True
+        )
     # Initialize the GPT-2 tokenizer
     gpt2_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
     # Load the model
@@ -67,16 +63,27 @@ def main():
 
     i = 0
     with tqdm(total=num_batches) as pbar:
+        loss_ema = None
         while i < num_batches:
             chosen_dataset = random.choice(assigned_datasets)
-            inputs = next(red_pajama_dataset[chosen_dataset])
-            texts = gpt2_tokenizer.batch_decode(inputs)
-            inputs = gpt2_tokenizer(texts, return_tensors="pt", padding=True, truncation=True)
-            inputs = inputs.to("cuda")
-            model_inputs = dict()
-            model_inputs["input_ids"] = inputs
-            model_inputs["labels"] = inputs
+            dataset_stream = iter(datasets[chosen_dataset])
+            try:
+                data_entry = next(dataset_stream)
+            except StopIteration:
+                # Handle the end of the dataset stream
+                break
 
+            # Assuming 'text' is a list of strings in each data_entry
+            texts = [entry['text'] for entry in data_entry if 'text' in entry]
+            if not texts:
+                continue  # Skip if no valid text is found
+
+            inputs = gpt2_tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to("cuda")
+            # Prepare model inputs
+            model_inputs = {
+                "input_ids": inputs["input_ids"],
+                "labels": inputs["input_ids"].clone()  # Assuming a language modeling task
+            }
             model.train()
             out = model(**model_inputs)
             out.loss.backward()
