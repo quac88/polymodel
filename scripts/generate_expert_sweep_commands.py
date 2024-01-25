@@ -32,7 +32,7 @@ def main():
     for i, component in enumerate(model_arch["components"].keys()):
         sweep_config["name"] = component
         sweep_id = wandb.sweep(
-            sweep=sweep_config, project=f"{args.model_name}_experts", entity="skynetcc"
+            sweep=sweep_config, project=f"{args.model_name}", entity="skynetcc"
         )
 
         pm2_command = (

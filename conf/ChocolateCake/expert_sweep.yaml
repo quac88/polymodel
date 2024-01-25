@@ -1,11 +1,11 @@
-program: scripts/tune_expert_with_gridsearch.py
+program: scripts/gridsearch_expert.py
 method: bayes
 metric:
   name: loss_ema
   goal: minimize
 parameters:
   batch_size:
-    values: [1, 2]
+    values: [1]
   num_batches:
     values: [8000, 16000, 32000, 64000]
   optimizer:

@@ -11,7 +11,7 @@ components:
       - "common_crawl"
       - "c4"
       - "github"
-    batch_size: 2
+    batch_size: 1
     learning_rate: 0.000006
     num_batches: 64000
     optimizer: "adam"
@@ -23,7 +23,7 @@ components:
     redpajama_subsets:
       - "books"
       - "arxiv"
-    batch_size: 2
+    batch_size: 1
     learning_rate: 0.000005
     num_batches: 32000
     optimizer: "adam"
@@ -35,7 +35,7 @@ components:
     redpajama_subsets:
       - "wikipedia"
       - "stackexchange"
-    batch_size: 2
+    batch_size: 1
     learning_rate: 0.000005
     num_batches: 64000
     optimizer: "adam"
