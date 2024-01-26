@@ -21,7 +21,7 @@ components:
     base_model: "EleutherAI/gpt-neo-2.7B"
     precision: "half"
     redpajama_subsets:
-      - "books"
+      - "book"
       - "arxiv"
     batch_size: 1
     learning_rate: 0.000005

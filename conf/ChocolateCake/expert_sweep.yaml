@@ -5,7 +5,7 @@ metric:
   goal: minimize
 parameters:
   batch_size:
-    values: [1]
+    values: [1, 2]
   num_batches:
     values: [8000, 16000, 32000, 64000]
   optimizer:
